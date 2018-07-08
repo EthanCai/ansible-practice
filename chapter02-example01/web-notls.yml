@@ -15,10 +15,10 @@
       copy: src=files/nginx.conf dest=/etc/nginx/sites-available/default
 
     - name: create /etc/nginx/sites-enabled/
-      file: 
-        path: /etc/nginx/sites-enabled/
-        state: directory
-        mode: 0644
+      file: >
+        path=/etc/nginx/sites-enabled/
+        state=directory
+        mode=0644
 
     - name: enable configuration
       file: >
