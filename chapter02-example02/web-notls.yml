@@ -1,0 +1,45 @@
+- name: Configure webserver with nginx
+  hosts: webservers
+  become: true
+  vars:
+    key_file: /etc/nginx/ssl/nginx.key
+    cert_file: /etc/nginx/ssl/nginx.crt
+    conf_file: /etc/nginx/sites-available/nginx.conf
+    server_name: localhost
+  tasks:
+    - name: install nginx
+      yum: name=nginx update_cache=yes
+
+    - name: create directories for ssl certificates
+      file: path=/etc/nginx/ssl state=directory
+
+    - name: copy TLS key
+      copy: src=files/nginx.key dest={{ key_file }} owner=root mode=0400
+      notify: restart nginx
+
+    - name: copy TLS certificate
+      copy: src=files/nginx.crt dest={{ cert_file }} owner=root mode=0400
+      notify: restart nginx
+
+    - name: create /etc/nginx/sites-available/
+      file: 
+        path: /etc/nginx/sites-available/
+        state: directory
+        mode: 0644
+
+    - name: copy nginx config file
+      template: src=templates/nginx.conf.j2 dest={{ conf_file }} mode=0644
+      notify: restart nginx
+
+    - name: enable configuration
+      file: >
+        dest=/etc/nginx/conf.d/nginx.conf
+        src={{ conf_file }}
+        state=link
+      notify: restart nginx
+    
+    - name: copy index.html
+      template: src=templates/index.html.j2 dest=/usr/share/nginx/html/index.html mode=0644
+  handlers:
+    - name: restart nginx
+      service: name=nginx state=restarted
